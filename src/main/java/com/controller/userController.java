@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +24,8 @@ public class userController {
 	@Autowired
 	userDao dao;
 
+	@Autowired
+	BCryptPasswordEncoder bCryptPasswordEncoder;
 //	@PostMapping("/signUp")
 //	public userBean saveUser(userBean bean) {
 //		bean.setRole(1);
@@ -29,9 +33,15 @@ public class userController {
 //		return bean;
 //
 //	}
+	
+	
 	@PostMapping("/signUp")
 	public ResponseBean<userBean> saveUser(userBean bean) {
 		bean.setRole(1);
+		
+		String enCodedPassword = bCryptPasswordEncoder.encode(bean.getPassword());
+		bean.setPassword(enCodedPassword);
+		
 		dao.addUser(bean);
 		ResponseBean<userBean> rb = new ResponseBean<>();
 		rb.setData(bean);
@@ -40,7 +50,25 @@ public class userController {
 		return rb;
 
 	}
-
+	
+	@PostMapping("/login")
+	public ResponseBean<userBean> authenticate(userBean bean){
+		userBean user=dao.authenticate(bean);
+		ResponseBean<userBean> rb = new ResponseBean<>();
+		if(bCryptPasswordEncoder.matches(bean.getPassword(), user.getPassword())) {			
+			
+			rb.setData(user);
+			rb.setMsg("login done");
+			rb.setStatus(200);
+		}
+		else {
+			rb.setData(bean);
+			rb.setMsg("login failed");
+			rb.setStatus(404);
+		}
+		return rb;
+		
+	}
 	@GetMapping("/getuserbyid")
 	public userBean getuserByid(@RequestParam("userId") int userId) {
 		userBean user = dao.getUserbyid(userId);

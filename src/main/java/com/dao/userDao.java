@@ -41,6 +41,12 @@ public class userDao {
 		stmt.update("update users set firstname = ?,email=? where userid  = ? ", user.getFirstName(), user.getEmail(),user.getUserid());
 		
 	}
+
+	public userBean authenticate(userBean bean) {
+		userBean user=stmt.queryForObject("select * from users where email=?",new BeanPropertyRowMapper<userBean>(userBean.class),bean.getEmail());
+		return user;
+		
+	}
 	
 
 }
